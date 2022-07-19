@@ -7,7 +7,7 @@
  * Author URI: https://konstantin.blog
  * Text Domain: surge
  * Domain Path: /languages
- * Version: 1.0.1
+ * Version: 1.0.4
  *
  * @package Surge
  */
@@ -29,6 +29,10 @@ add_action( 'plugins_loaded', function() {
 
 	if ( wp_doing_cron() ) {
 		include_once( __DIR__ . '/include/cron.php' );
+	}
+
+	if ( defined( 'WP_CLI' ) && WP_CLI ) {
+		include_once( __DIR__ . '/include/cli.php' );
 	}
 
 	include_once( __DIR__ . '/include/invalidate.php' );

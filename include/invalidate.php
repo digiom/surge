@@ -32,8 +32,11 @@ add_action( 'transition_post_status', function( $status, $old_status, $post ) {
 		return;
 	}
 
-	// To or from publish. TODO: maybe account for other publicly visible statuses.
-	if ( $status == 'publish' || $old_status == 'publish' ) {
+	$status = get_post_status_object( $status );
+	$old_status = get_post_status_object( $old_status );
+
+	// To or from a public post status.
+	if ( ( $status && $status->public ) || ( $old_status && $old_status->public ) ) {
 		expire( 'post_type:' . $post->post_type );
 	}
 }, 10, 3 );
@@ -111,6 +114,7 @@ add_action( 'shutdown', function() {
 		'update_option_show_on_front',
 		'update_option_page_on_front',
 		'update_option_page_for_posts',
+		'update_option_posts_per_page',
 		'update_option_woocommerce_permalinks',
 		'automatic_updates_complete',
 		'_core_updated_successfully',
@@ -130,9 +134,22 @@ add_action( 'shutdown', function() {
 
 	$flags = null;
 	$path = CACHE_DIR . '/flags.json.php';
-	if ( file_exists( $path ) ) {
-		// TODO: Fix race condition, two requests could be modifying flags simultaneously.
-		$flags = substr( file_get_contents( $path ), strlen( '<?php exit; ?>' ) );
+	$exists = file_exists( $path );
+	$mode = $exists ? 'r+' : 'w+';
+
+	// Make sure cache dir exists.
+	if ( ! $exists && ! wp_mkdir_p( CACHE_DIR ) ) {
+		return;
+	}
+
+	$f = fopen( $path, $mode );
+	$length = filesize( $path );
+
+	flock( $f, LOCK_EX );
+
+	if ( $length ) {
+		$flags = fread( $f, $length );
+		$flags = substr( $flags, strlen( '<?php exit; ?>' ) );
 		$flags = json_decode( $flags, true );
 	}
 
@@ -148,7 +165,13 @@ add_action( 'shutdown', function() {
 		return $contents;
 	}
 
-	file_put_contents( $path, '<?php exit; ?>' . json_encode( $flags ), LOCK_EX ); // TODO: This lock doesn't really help
+	if ( $length ) {
+		ftruncate( $f, 0 );
+		rewind( $f );
+	}
+
+	fwrite( $f, '<?php exit; ?>' . json_encode( $flags ) );
+	fclose( $f );
 } );
 
 $expire_feeds = function() { expire( 'feed:' . get_current_blog_id() ); };

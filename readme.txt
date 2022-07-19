@@ -3,9 +3,9 @@ Contributors: kovshenin
 Donate link: https://github.com/kovshenin/surge
 Tags: cache, performance, caching
 Requires at least: 5.7
-Tested up to: 5.8.2
+Tested up to: 6.0
 Requires PHP: 7.3
-Stable tag: 1.0.1
+Stable tag: 1.0.4
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.en.html
 
@@ -35,6 +35,10 @@ Using WP-CLI: wp plugin install surge --activate
 
 There isn't one.
 
+= How do I clear the cache? =
+
+Toggle the plugin activation or run `wp surge flush` using WP-CLI.
+
 = Is my cache working? =
 
 Visit the Site Health screen under Tools in your WordPress dashboard. Common caching errors, like installation problems, etc. will appear there. Otherwise, open your site in an Incognito window to see the cached version. You could also look for the "X-Cache" header in the server response.
@@ -62,7 +66,26 @@ If you like Surge, consider giving us a [star on GitHub](https://github.com/kovs
 
 == Changelog ==
 
+= 1.0.4 =
+* Add a WP-CLI command to invalidate/flush page cache
+* Fix redirect loop with Core's redirect_canonical for ignore_query_vars
+* Fix warnings for requests with empty headers
+* Fix warnings when cron cleanup attempts to read a file that no longer exists
+* Add a filter to disable writing to wp-config.php
+
+= 1.0.3 =
+* Invalidate cache when posts_per_page is changed
+* Fix redirect loop with unknown query vars caused by Core's redirect_canonical
+* Ignore X-Cache and X-Powered-By headers from cache metadata
+* Allow multiple headers with the same name
+
+= 1.0.2 =
+* Fix PHP notice in invalidation
+* Protect against race conditions when writing flags.json
+* Add support for more post statuses in transition_post_status invalidation
+
 = 1.0.1 =
+* Add support for custom user configuration
 * Various invalidation enhancements and fixes
 * Remove advanced-cache.php when plugin is deactivated
 * Add a note about fpassthru() in FAQ
